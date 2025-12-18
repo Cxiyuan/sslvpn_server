@@ -21,10 +21,7 @@
       </el-main>
       <el-footer>
         <div>
-          <el-button size="mini" @click="goUrl('https://gitee.com/bjdgyc/anylink')">
-            Powered by SSLVPN
-          </el-button>
-          企业级远程办公系统 AGPL-3.0 ⓒ 2020-present
+          Powered by DxP0rt
         </div>
       </el-footer>
     </el-container>
@@ -46,9 +43,6 @@ export default {
     }
   },
   methods: {
-    goUrl(url) {
-      window.open(url, "_blank")
-    },
   },
   watch: {
     route_path: function (val) {
@@ -91,19 +85,6 @@ export default {
   color: #909399;
 }
 
-.el-footer >>> .el-button {
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.el-footer >>> .el-button:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-color: transparent;
-}
-
 .el-aside {
   transition: width 0.3s;
   overflow: hidden;
@@ -143,17 +124,6 @@ export default {
 .el-table {
   border-radius: 8px;
   overflow: hidden;
-}
-
-.el-button--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.el-button--primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* 页面过渡动画 */
