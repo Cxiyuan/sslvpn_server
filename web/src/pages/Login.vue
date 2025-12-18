@@ -137,7 +137,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #183661;
   z-index: 1;
 }
 
@@ -250,7 +250,7 @@ export default {
   font-size: 16px;
   font-weight: bold;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #183661;
   border: none;
   transition: all 0.3s;
   margin-top: 10px;
@@ -258,7 +258,7 @@ export default {
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(24, 54, 97, 0.4);
 }
 
 .login-button:active {
