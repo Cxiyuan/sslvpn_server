@@ -6,7 +6,10 @@
           <div class="logo-icon">
             <i class="el-icon-connection"></i>
           </div>
-          <span class="logo-text">安全访问管理系统</span>
+          <div class="logo-text">
+            <div>安全访问</div>
+            <div>管理系统</div>
+          </div>
         </div>
         <div v-else class="sidebar-logo-mini">
           <i class="el-icon-connection"></i>
@@ -127,10 +130,12 @@ export default {
 }
 
 .logo-text {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: bold;
   color: #fff;
   font-family: "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .sidebar-logo-mini {

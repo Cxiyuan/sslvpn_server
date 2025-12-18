@@ -35,6 +35,7 @@
       title="修改密码"
       :visible.sync="passwordDialogVisible"
       width="450px"
+      :modal="false"
       :close-on-click-modal="false">
       <el-form :model="passwordForm" :rules="passwordRules" ref="passwordForm" label-width="100px">
         <el-form-item label="原密码" prop="old_pass">
