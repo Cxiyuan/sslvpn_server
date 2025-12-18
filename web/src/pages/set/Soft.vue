@@ -89,6 +89,15 @@
                 placeholder="请输入配置值">
               </el-input>
 
+              <!-- max_client 特殊提示 -->
+              <el-tooltip 
+                v-if="scope.row.name === 'max_client'"
+                effect="dark"
+                content="如需增加用户上限，请增加用户授权数"
+                placement="top">
+                <i class="el-icon-question" style="margin-left: 8px; color: #909399; cursor: help;"></i>
+              </el-tooltip>
+
               <el-tag 
                 v-if="scope.row.changed" 
                 type="warning" 
@@ -190,9 +199,14 @@ export default {
     },
     
     isReadOnly(name) {
-      // 根据后端返回的 sensitive 字段判断
       const item = this.soft_data.find(i => i.name === name);
-      return item && item.sensitive === true;
+      if (item && item.sensitive === true) {
+        return true;
+      }
+      if (name === 'max_client') {
+        return true;
+      }
+      return false;
     },
     
     handleValueChange() {
