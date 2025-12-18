@@ -8,10 +8,10 @@ title: "affected/package: "
 请先填写下面的问题，再填写具体遇到的问题，感谢！
 -->
 
-### 使用的anylink版本 ?
+### 使用的sslvpn版本 ?
 
 <pre>
-./anylink tool -v
+./sslvpn tool -v
 管理后台也可以查看
 </pre>
 
@@ -31,5 +31,4 @@ uname -a
 </pre>
 
 ### 具体遇到的问题，可上传截图
-
 

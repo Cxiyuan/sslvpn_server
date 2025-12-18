@@ -35,7 +35,7 @@ func LinkHome(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// if index.Homeindex == "" {
-	// 	index.Homeindex = "AnyLink 是一个企业级远程办公 SSL VPN 软件，可以支持多人同时在线使用。"
+	// 	index.Homeindex = "SSLVPN 是一个企业级远程办公 SSL VPN 软件，可以支持多人同时在线使用。"
 	// }
 	fmt.Fprintln(w, index.Homeindex)
 }

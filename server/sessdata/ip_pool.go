@@ -107,6 +107,42 @@ func AcquireIp(username, macAddr string, uniqueMac bool) (newIp net.IP) {
 		tNow = time.Now()
 	)
 
+	// 首先检查该用户是否有保留的IP
+	keepIpMaps := []dbdata.IpMap{}
+	err = dbdata.FindWhere(&keepIpMaps, 10, 1, "username=? AND keep=?", username, true)
+	if err == nil && len(keepIpMaps) > 0 {
+		// 找到保留的IP，检查是否可用
+		for _, mi := range keepIpMaps {
+			ipStr := mi.IpAddr
+			ip := net.ParseIP(ipStr)
+			
+			// 检查IP格式是否合法
+			if ip == nil {
+				base.Error(username, ipStr, "保留IP格式错误，跳过此条记录")
+				continue
+			}
+			
+			// 检查IP是否在IP池范围内且未被占用
+			if ipInPool(ip) {
+				if _, ok := ipActive[ipStr]; !ok {
+					// IP可用，分配给用户
+					mi.MacAddr = macAddr
+					mi.UniqueMac = uniqueMac
+					mi.LastLogin = tNow
+					_ = dbdata.Set(&mi)
+					ipActive[ipStr] = true
+					return ip
+				} else {
+					// 保留的IP被占用，这不应该发生
+					base.Warn("Reserved IP is occupied:", username, ipStr)
+				}
+			} else {
+				// 保留的IP不在当前IP池范围内
+				base.Error(username, ipStr, "保留IP不在CIDR范围内")
+			}
+		}
+	}
+
 	// 获取到客户端 macAddr 的情况
 	if uniqueMac {
 		// 判断是否已经分配过
@@ -142,19 +178,19 @@ func AcquireIp(username, macAddr string, uniqueMac bool) (newIp net.IP) {
 			return ip
 		}
 
-		// ip保留
+		// IP不可用，但如果是保留IP，不能删除
 		if mi.Keep {
-			base.Error(username, macAddr, ipStr, "保留ip不匹配CIDR")
+			base.Error(username, macAddr, ipStr, "保留IP不匹配CIDR或被占用")
 			return nil
 		}
 
-		// 删除当前macAddr
+		// 删除当前macAddr的映射
 		mi = &dbdata.IpMap{MacAddr: macAddr}
 		_ = dbdata.Del(mi)
 		return loopIp(username, macAddr, uniqueMac)
 	}
 
-	// 没有获取到mac的情况
+	// 没有获取到mac的情况，查找该用户之前使用的IP
 	ipMaps := []dbdata.IpMap{}
 	err = dbdata.FindWhere(&ipMaps, 30, 1, "username=?", username)
 	if err != nil {
@@ -167,7 +203,7 @@ func AcquireIp(username, macAddr string, uniqueMac bool) (newIp net.IP) {
 		return nil
 	}
 
-	// 遍历mac记录
+	// 遍历用户的历史IP记录
 	for _, mi := range ipMaps {
 		ipStr := mi.IpAddr
 		ip := net.ParseIP(ipStr)
@@ -176,7 +212,7 @@ func AcquireIp(username, macAddr string, uniqueMac bool) (newIp net.IP) {
 		if _, ok := ipActive[ipStr]; ok {
 			continue
 		}
-		// 跳过保留ip
+		// 跳过保留IP（已在前面处理）
 		if mi.Keep {
 			continue
 		}
@@ -192,7 +228,7 @@ func AcquireIp(username, macAddr string, uniqueMac bool) (newIp net.IP) {
 			mi.MacAddr = macAddr
 			mi.UniqueMac = uniqueMac
 			// 回写db数据
-			_ = dbdata.Set(mi)
+			_ = dbdata.Set(&mi)
 			ipActive[ipStr] = true
 			return ip
 		}
@@ -282,7 +318,7 @@ func loopLong(start, end uint32, username, macAddr string, uniqueMac bool) (uint
 		}
 
 		// 查询到已经使用的ip
-		// 跳过保留ip
+		// 跳过保留IP（保留IP只能分配给指定用户）
 		if mi.Keep {
 			continue
 		}

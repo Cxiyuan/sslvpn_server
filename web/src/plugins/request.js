@@ -29,10 +29,10 @@ function request(vm) {
     // 参数 1， 表示成功响应
     axios.interceptors.response.use(null, err => {
         // 没有登录或令牌过期
-        if (err.response.status === 401) {
-            // 注销，情况状态和token
+        if (err.response && err.response.status === 401) {
+            // 注销，清除状态和token
             // vm.$store.dispatch("logout");
-            // 跳转的登录页
+            // 跳转到登录页
             removeToken();
             vm.$router.push('/login');
             // 注意: 这里的 vm 实例需要外部传入
@@ -42,7 +42,6 @@ function request(vm) {
 }
 
 export default request
-
 
 
 

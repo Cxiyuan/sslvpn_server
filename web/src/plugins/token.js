@@ -1,5 +1,5 @@
-const tokenKey = 'AnyLink-Jwt-Token'
-const tokenUser = 'AnyLink-Jwt-User'
+const tokenKey = 'SSLVPN-Jwt-Token'
+const tokenUser = 'SSLVPN-Jwt-User'
 
 export function getToken() {
     return localStorage.getItem(tokenKey)

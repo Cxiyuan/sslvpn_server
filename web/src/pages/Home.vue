@@ -202,6 +202,9 @@ export default {
         console.log(data);
         this.counts = data.counts
       }).catch(error => {
+        if (error.response && error.response.status === 401) {
+          return;
+        }
         this.$message.error('哦，请求出错');
         console.log(error);
       });
@@ -353,6 +356,9 @@ export default {
         }
         this.groupNames = groupNames
       }).catch(error => {
+        if (error.response && error.response.status === 401) {
+          return;
+        }
         this.$message.error('哦，请求出错');
         console.log(error);
       });
@@ -365,80 +371,139 @@ export default {
 </script>
 
 <style scoped>
+.home {
+  padding: 20px;
+}
+
 .panel-group {
-    margin-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.card-panel-col {
+  margin-bottom: 20px;
 }
 
 .card-panel {
   display: flex;
-  border-radius: 12px;
+  align-items: center;
   justify-content: space-around;
-  border: 1px solid red;
-  padding: 20px 0;
-
-  color: #666;
+  padding: 30px 20px;
   background: #fff;
-  /*box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);*/
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .12), 0 0 3px 0 rgba(0, 0, 0, .04);
-  border-color: rgba(0, 0, 0, .05);
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleY(0);
+  transition: transform 0.3s;
 }
 
 .card-panel:hover {
-    box-shadow: 0 3px 5px 2px rgba(0, 0, 0, .12), 0 0 5px 0 rgba(0, 0, 0, .04);
-    cursor:pointer;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card-panel:hover::before {
+  transform: scaleY(1);
+}
+
+.card-panel i {
+  transition: transform 0.3s;
+}
+
+.card-panel:hover i {
+  transform: scale(1.1);
 }
 
 .card-panel-description {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  gap: 10px;
+  align-items: flex-start;
 }
 
 .card-panel-text {
-  line-height: 18px;
-  color: rgba(0, 0, 0, .45);
-  font-size: 16px;
+  font-size: 14px;
+  color: #909399;
+  font-weight: 500;
 }
 
 .panel-num {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
 }
 
 .line-chart-box {
-  padding: 0px 0px;
-  margin-top: 10px; 
+  margin-top: 20px;
 }
 
 .line-chart-col {
-    position: relative;
+  position: relative;
+  margin-bottom: 20px;
 }
 
-.line-chart {
-  border-radius: 12px;
+.line-chart-col >>> .line-chart {
   background: #fff;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .12), 0 0 3px 0 rgba(0, 0, 0, .04);
-  border-color: rgba(0, 0, 0, .05);
-  padding:5px 5px;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+}
+
+.line-chart-col >>> .line-chart:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .time-range {
-    position: absolute;
-    right: 5px;
-    top: 5px;
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  z-index: 10;
 }
 
 .chart-group-name {
-    position: absolute;
-    left: 110px;
-    top: 5px;
-    width: 130px;
-    font-size: 10px;
+  position: absolute;
+  left: 140px;
+  top: 20px;
+  width: 150px;
+  z-index: 10;
 }
 
 /deep/ .el-radio-button--mini .el-radio-button__inner {
-    padding: 7px 8px;    
-    font-size: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/deep/ .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+/deep/ .el-select {
+  width: 100%;
+}
+
+/deep/ .el-select .el-input__inner {
+  border-radius: 6px;
+  border-color: #dcdfe6;
+  transition: all 0.3s;
+}
+
+/deep/ .el-select .el-input__inner:hover {
+  border-color: #667eea;
 }
 </style>

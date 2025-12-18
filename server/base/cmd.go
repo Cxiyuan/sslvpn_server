@@ -85,9 +85,9 @@ func execute() {
 func initCmd() {
 	linkViper = viper.New()
 	rootCmd = &cobra.Command{
-		Use:   "anylink",
-		Short: "AnyLink VPN Server",
-		Long:  `AnyLink is a VPN Server application`,
+		Use:   "sslvpn",
+		Short: "SSLVPN Server",
+		Long:  `SSLVPN is a VPN Server application`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// fmt.Println("cmd：", cmd.Use, args)
 			runSrv = true
@@ -129,8 +129,8 @@ func initCmd() {
 func initToolCmd() *cobra.Command {
 	toolCmd := &cobra.Command{
 		Use:   "tool",
-		Short: "AnyLink tool",
-		Long:  `AnyLink tool is a application`,
+		Short: "SSLVPN tool",
+		Long:  `SSLVPN tool is a application`,
 	}
 
 	toolCmd.Flags().BoolVarP(&rev, "version", "v", false, "display version info")
@@ -152,7 +152,7 @@ func initToolCmd() *cobra.Command {
 		case otp:
 			s := gotp.RandomSecret(32)
 			fmt.Printf("Otp:%s\n\n", s)
-			qrstr := fmt.Sprintf("otpauth://totp/%s:%s?issuer=%s&secret=%s", "anylink_admin", "admin@anylink", "anylink_admin", s)
+			qrstr := fmt.Sprintf("otpauth://totp/%s:%s?issuer=%s&secret=%s", "sslvpn_admin", "admin@sslvpn", "sslvpn_admin", s)
 			qr, _ := qrcode.New(qrstr, qrcode.High)
 			ss := qr.ToSmallString(false)
 			io.WriteString(os.Stderr, ss)
@@ -162,7 +162,7 @@ func initToolCmd() *cobra.Command {
 		case debug:
 			// linkViper.Debug()
 		default:
-			fmt.Println("Using [anylink tool -h] for help")
+			fmt.Println("Using [sslvpn tool -h] for help")
 		}
 	}
 

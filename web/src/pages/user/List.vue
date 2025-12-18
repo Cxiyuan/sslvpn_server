@@ -119,13 +119,13 @@
           <el-input v-model="ruleForm.id" disabled></el-input>
         </el-form-item>
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="ruleForm.username" :disabled="ruleForm.id > 0"></el-input>
+          <el-input v-model="ruleForm.username" :disabled="ruleForm.id > 0" @blur="validateField('username')"></el-input>
         </el-form-item>
         <el-form-item label="姓名" prop="nickname">
-          <el-input v-model="ruleForm.nickname"></el-input>
+          <el-input v-model="ruleForm.nickname" @blur="validateField('nickname')"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="ruleForm.email"></el-input>
+          <el-input v-model="ruleForm.email" @blur="validateField('email')"></el-input>
         </el-form-item>
 
         <el-form-item label="PIN码" prop="pin_code">
@@ -208,7 +208,8 @@ export default {
       searchData: '',
       otpImgData: { visible: false, username: '', nickname: '', base64Img: '' },
       ruleForm: {
-        send_email: true,
+        send_email: false,
+        disable_otp: true,
         status: 1,
         groups: [],
       },
@@ -389,6 +390,9 @@ export default {
       this.searchData = "";
       this.handleSearch();
     },
+    validateField(field) {
+      this.$refs['ruleForm'].validateField(field);
+    }
   },
 }
 </script>

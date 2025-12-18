@@ -1,0 +1,24 @@
+[Unit]
+Description=SSLVPN Server Service
+Documentation=https://github.com/bjdgyc/anylink
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/local/sslvpn-deploy
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/sslvpn-deploy/sslvpn --conf=/usr/local/sslvpn-deploy/conf/server.toml
+
+# systemctl --version
+
+# systemd older than v236
+# ExecStart=/bin/bash -c 'exec /usr/local/sslvpn-deploy/sslvpn --conf=/usr/local/sslvpn-deploy/conf/server.toml >> /usr/local/sslvpn-deploy/log/sslvpn.log 2>&1'
+
+# systemd new than v236
+# StandardOutput=file:/usr/local/sslvpn-deploy/log/sslvpn-systemd.log
+# StandardError=file:/usr/local/sslvpn-deploy/log/sslvpn-systemd.log
+
+[Install]
+WantedBy=multi-user.target

@@ -10,17 +10,18 @@ const (
 )
 
 type config struct {
-	Typ     int
-	Name    string
-	Short   string
-	Usage   string
-	ValStr  string
-	ValInt  int
-	ValBool bool
+	Typ       int
+	Name      string
+	Short     string
+	Usage     string
+	ValStr    string
+	ValInt    int
+	ValBool   bool
+	Sensitive bool // 标记敏感配置项
 }
 
 var configs = []config{
-	{Typ: cfgStr, Name: "conf", Usage: "config file", ValStr: "./conf/server.toml", Short: "c"},
+	{Typ: cfgStr, Name: "conf", Usage: "config file", ValStr: "./conf/server.toml", Short: "c", Sensitive: true},
 	{Typ: cfgStr, Name: "profile", Usage: "profile.xml file", ValStr: "./conf/profile.xml"},
 	{Typ: cfgStr, Name: "profile_name", Usage: "profile name(用于区分不同服务端的配置)", ValStr: "anylink"},
 	{Typ: cfgStr, Name: "server_addr", Usage: "TCP服务监听地址(任意端口)", ValStr: ":443"},
@@ -29,8 +30,8 @@ var configs = []config{
 	{Typ: cfgStr, Name: "advertise_dtls_addr", Usage: "DTLS对外映射端口(为空则与server_dtls_addr相同)", ValStr: ""},
 	{Typ: cfgStr, Name: "admin_addr", Usage: "后台服务监听地址", ValStr: ":8800"},
 	{Typ: cfgBool, Name: "proxy_protocol", Usage: "TCP代理协议", ValBool: false},
-	{Typ: cfgStr, Name: "db_type", Usage: "数据库类型 [sqlite3 mysql postgres]", ValStr: "sqlite3"},
-	{Typ: cfgStr, Name: "db_source", Usage: "数据库source", ValStr: "./conf/anylink.db"},
+	{Typ: cfgStr, Name: "db_type", Usage: "数据库类型 [sqlite3 mysql postgres]", ValStr: "sqlite3", Sensitive: true},
+	{Typ: cfgStr, Name: "db_source", Usage: "数据库source", ValStr: "./conf/sslvpn.db", Sensitive: true},
 	{Typ: cfgStr, Name: "cert_file", Usage: "证书文件", ValStr: "./conf/vpn_cert.pem"},
 	{Typ: cfgStr, Name: "cert_key", Usage: "证书密钥", ValStr: "./conf/vpn_cert.key"},
 	{Typ: cfgStr, Name: "files_path", Usage: "外部下载文件路径", ValStr: "./conf/files"},
@@ -40,9 +41,9 @@ var configs = []config{
 	{Typ: cfgBool, Name: "pprof", Usage: "开启pprof", ValBool: true},
 	{Typ: cfgStr, Name: "issuer", Usage: "系统名称", ValStr: "XX公司VPN"},
 	{Typ: cfgStr, Name: "admin_user", Usage: "管理用户名", ValStr: "admin"},
-	{Typ: cfgStr, Name: "admin_pass", Usage: "管理用户密码", ValStr: defaultPwd},
-	{Typ: cfgStr, Name: "admin_otp", Usage: "管理用户otp,生成命令 ./anylink tool -o", ValStr: ""},
-	{Typ: cfgStr, Name: "jwt_secret", Usage: "JWT密钥", ValStr: defaultJwt},
+	{Typ: cfgStr, Name: "admin_pass", Usage: "管理用户密码", ValStr: defaultPwd, Sensitive: true},
+	{Typ: cfgStr, Name: "admin_otp", Usage: "管理用户otp,生成命令 ./anylink tool -o", ValStr: "", Sensitive: true},
+	{Typ: cfgStr, Name: "jwt_secret", Usage: "JWT密钥", ValStr: defaultJwt, Sensitive: true},
 	{Typ: cfgStr, Name: "link_mode", Usage: "虚拟网络类型[tun tap macvtap ipvtap]", ValStr: "tun"},
 	{Typ: cfgStr, Name: "ipv4_master", Usage: "ipv4主网卡名称", ValStr: "eth0"},
 	{Typ: cfgStr, Name: "ipv4_cidr", Usage: "ip地址网段", ValStr: "192.168.90.0/24"},

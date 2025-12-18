@@ -46,6 +46,7 @@ func StartAdmin() {
 	r.HandleFunc("/set/home", SetHome)
 	r.HandleFunc("/set/system", SetSystem)
 	r.HandleFunc("/set/soft", SetSoft)
+	r.HandleFunc("/set/soft/save", SetSoftSave).Methods(http.MethodPost)
 	r.HandleFunc("/set/other", SetOther)
 	r.HandleFunc("/set/other/edit", SetOtherEdit)
 	r.HandleFunc("/set/other/smtp", SetOtherSmtp)

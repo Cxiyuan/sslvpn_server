@@ -8,17 +8,16 @@
                             size="small"
                             type="primary"
                             icon="el-icon-plus"
-                            @click="handleEdit('')">添加
+                            @click="handleEdit('')">添加IP保留
                     </el-button>
                 </el-form-item>
-                <!--
                 <el-form-item>
                     <el-alert
-                            title="直接操作数据库增删改数据后，请重启anylink服务"
-                            type="warning">
+                            title="IP保留功能：为指定用户名永久保留IP地址，该用户每次连接都会获得相同的IP"
+                            type="info"
+                            :closable="false">
                     </el-alert>
                 </el-form-item>
-                -->
             </el-form>
 
             <el-table
@@ -35,38 +34,42 @@
 
                 <el-table-column
                         prop="ip_addr"
-                        label="IP地址">
-                </el-table-column>
-
-                <el-table-column
-                        prop="mac_addr"
-                        label="MAC地址">
-                </el-table-column>
-
-                <el-table-column
-                        prop="unique_mac"
-                        label="唯一MAC">
-                    <template slot-scope="scope">
-                        <el-tag v-if="scope.row.unique_mac" type="success">是</el-tag>
-                        <el-tag v-else type="info">否</el-tag>
-                    </template>
+                        label="IP地址"
+                        width="150">
                 </el-table-column>
 
                 <el-table-column
                         prop="username"
-                        label="用户名">
+                        label="用户名"
+                        width="150">
                 </el-table-column>
 
                 <el-table-column
                         prop="keep"
-                        label="IP保留">
+                        label="IP保留"
+                        width="100">
                     <template slot-scope="scope">
-                        <!--            <el-tag v-if="scope.row.keep" type="success">保留</el-tag>-->
                         <el-switch
                                 disabled
                                 v-model="scope.row.keep"
                                 active-color="#13ce66">
                         </el-switch>
+                    </template>
+                </el-table-column>
+
+                <el-table-column
+                        prop="mac_addr"
+                        label="MAC地址"
+                        width="150">
+                </el-table-column>
+
+                <el-table-column
+                        prop="unique_mac"
+                        label="唯一MAC"
+                        width="100">
+                    <template slot-scope="scope">
+                        <el-tag v-if="scope.row.unique_mac" type="success">是</el-tag>
+                        <el-tag v-else type="info">否</el-tag>
                     </template>
                 </el-table-column>
 
@@ -120,36 +123,40 @@
 
         <!--新增、修改弹出框-->
         <el-dialog
-                title="提示"
+                title="IP映射管理"
                 :close-on-click-modal="false"
                 :visible="user_edit_dialog"
                 @close="disVisible"
                 width="600px"
                 center>
 
-            <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="ruleForm">
+            <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="ruleForm">
                 <el-form-item label="ID" prop="id">
                     <el-input v-model="ruleForm.id" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="IP地址" prop="ip_addr">
                     <el-input v-model="ruleForm.ip_addr"></el-input>
                 </el-form-item>
-                <el-form-item label="MAC地址" prop="mac_addr">
-                    <el-input v-model="ruleForm.mac_addr"></el-input>
-                </el-form-item>
                 <el-form-item label="用户名" prop="username">
                     <el-input v-model="ruleForm.username"></el-input>
                 </el-form-item>
-
-                <el-form-item label="备注" prop="note">
-                    <el-input v-model="ruleForm.note"></el-input>
-                </el-form-item>
-
+                
                 <el-form-item label="IP保留" prop="keep">
                     <el-switch
                             v-model="ruleForm.keep"
                             active-color="#13ce66">
                     </el-switch>
+                    <span style="margin-left: 10px; color: #909399; font-size: 12px;">
+                        开启后，该IP将永久分配给指定用户名
+                    </span>
+                </el-form-item>
+
+                <el-form-item label="MAC地址" prop="mac_addr">
+                    <el-input v-model="ruleForm.mac_addr" placeholder="自动记录，无需手动填写"></el-input>
+                </el-form-item>
+
+                <el-form-item label="备注" prop="note">
+                    <el-input v-model="ruleForm.note"></el-input>
                 </el-form-item>
 
                 <el-form-item>
@@ -188,16 +195,15 @@ export default {
             },
             rules: {
                 username: [
-                    {required: false, message: '请输入用户名', trigger: 'blur'},
-                    {max: 50, message: '长度小于 50 个字符', trigger: 'blur'}
+                    {required: true, message: '请输入用户名', trigger: 'blur'},
+                    {max: 60, message: '长度小于 60 个字符', trigger: 'blur'}
                 ],
                 mac_addr: [
-                    {required: true, message: '请输入mac地址', trigger: 'blur'}
+                    {required: false, message: 'MAC地址自动记录', trigger: 'blur'}
                 ],
                 ip_addr: [
-                    {required: true, message: '请输入ip地址', trigger: 'blur'}
+                    {required: true, message: '请输入IP地址', trigger: 'blur'}
                 ],
-
                 status: [
                     {required: true}
                 ],
@@ -216,6 +222,9 @@ export default {
                 this.tableData = data.datas;
                 this.count = data.count
             }).catch(error => {
+                if (error.response && error.response.status === 401) {
+                    return;
+                }
                 this.$message.error('哦，请求出错');
                 console.log(error);
             });
@@ -238,6 +247,9 @@ export default {
             }).then(resp => {
                 this.ruleForm = resp.data.data
             }).catch(error => {
+                if (error.response && error.response.status === 401) {
+                    return;
+                }
                 this.$message.error('哦，请求出错');
                 console.log(error);
             });
@@ -253,6 +265,9 @@ export default {
                 }
                 console.log(rdata);
             }).catch(error => {
+                if (error.response && error.response.status === 401) {
+                    return;
+                }
                 this.$message.error('哦，请求出错');
                 console.log(error);
             });

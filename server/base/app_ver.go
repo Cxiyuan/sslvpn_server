@@ -1,13 +1,13 @@
 package base
 
 const (
-	APP_NAME = "AnyLink"
+	APP_NAME = "SSLVPN"
 )
 
 var (
 	// APP_VER app版本号
-	APP_VER = "0.0.1"
+	APP_VER = "1.5.3"
 	// 提交id
-	CommitId  string
+	CommitId  = "release"
 	BuildDate string
 )

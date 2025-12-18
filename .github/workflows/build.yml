@@ -1,0 +1,320 @@
+name: Build SSLVPN
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Build frontend
+      run: |
+        cd web
+        npm install
+        npm run build
+        cd ..
+
+    - name: Build backend
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        CGO_ENABLED: 1
+      run: |
+        cd server
+        go build -ldflags "-X main.CommitId=$(git rev-parse --short HEAD) -X main.BuildDate=$(date -u +%Y%m%d-%H%M%S)" -o sslvpn
+        cd ..
+
+    - name: Prepare deployment package
+      run: |
+        # 创建打包目录
+        mkdir -p sslvpn-deploy/conf
+        mkdir -p sslvpn-deploy/files
+        mkdir -p sslvpn-deploy/log
+        
+        # 复制二进制文件
+        cp server/sslvpn sslvpn-deploy/
+        chmod +x sslvpn-deploy/sslvpn
+        
+        # 复制配置文件
+        cp server/conf/server-sample.toml sslvpn-deploy/conf/server.toml
+        cp server/conf/profile.xml sslvpn-deploy/conf/
+        
+        # 复制证书（如果需要，这里使用示例证书）
+        if [ -f server/conf/vpn_cert.pem ]; then
+          cp server/conf/vpn_cert.pem sslvpn-deploy/conf/
+          cp server/conf/vpn_cert.key sslvpn-deploy/conf/
+        fi
+        
+        # 创建空数据库文件（占位）
+        touch sslvpn-deploy/conf/sslvpn.db
+        
+        # 创建systemd服务文件
+        cat > sslvpn-deploy/sslvpn.service << 'EOF'
+        [Unit]
+        Description=SSLVPN Server Service
+        After=network.target
+
+        [Service]
+        Type=simple
+        WorkingDirectory=/opt/sslvpn
+        ExecStart=/opt/sslvpn/sslvpn --conf=/opt/sslvpn/conf/server.toml
+        Restart=on-failure
+        RestartSec=5s
+        LimitNOFILE=65536
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+        
+        # 创建部署脚本
+        cat > sslvpn-deploy/install.sh << 'EOF'
+        #!/bin/bash
+        
+        set -e
+        
+        echo "========================================="
+        echo "  SSLVPN 部署脚本"
+        echo "========================================="
+        echo ""
+        
+        # 检查是否为root用户
+        if [ "$EUID" -ne 0 ]; then 
+          echo "错误: 请使用 root 用户运行此脚本"
+          exit 1
+        fi
+        
+        # 停止服务（如果正在运行）
+        if systemctl is-active --quiet sslvpn; then
+          echo "停止现有 SSLVPN 服务..."
+          systemctl stop sslvpn
+        fi
+        
+        # 创建目标目录
+        echo "创建部署目录: /opt/sslvpn"
+        mkdir -p /opt/sslvpn/conf
+        mkdir -p /opt/sslvpn/files
+        mkdir -p /opt/sslvpn/log
+        
+        # 复制文件
+        echo "复制程序文件..."
+        cp -f sslvpn /opt/sslvpn/
+        chmod +x /opt/sslvpn/sslvpn
+        
+        # 复制配置文件（如果目标不存在）
+        if [ ! -f /opt/sslvpn/conf/server.toml ]; then
+          echo "复制配置文件..."
+          cp conf/server.toml /opt/sslvpn/conf/
+        else
+          echo "配置文件已存在，跳过覆盖"
+          echo "新配置文件已保存为: /opt/sslvpn/conf/server.toml.new"
+          cp conf/server.toml /opt/sslvpn/conf/server.toml.new
+        fi
+        
+        # 复制其他配置文件
+        cp -f conf/profile.xml /opt/sslvpn/conf/
+        
+        if [ -f conf/vpn_cert.pem ]; then
+          if [ ! -f /opt/sslvpn/conf/vpn_cert.pem ]; then
+            cp conf/vpn_cert.pem /opt/sslvpn/conf/
+            cp conf/vpn_cert.key /opt/sslvpn/conf/
+          fi
+        fi
+        
+        # 数据库文件（不覆盖）
+        if [ ! -f /opt/sslvpn/conf/sslvpn.db ]; then
+          echo "初始化数据库文件..."
+          cp conf/sslvpn.db /opt/sslvpn/conf/
+        fi
+        
+        # 安装systemd服务
+        echo "安装 systemd 服务..."
+        cp -f sslvpn.service /etc/systemd/system/
+        systemctl daemon-reload
+        
+        # 启用并启动服务
+        echo "启用并启动 SSLVPN 服务..."
+        systemctl enable sslvpn
+        systemctl start sslvpn
+        
+        echo ""
+        echo "========================================="
+        echo "  部署完成！"
+        echo "========================================="
+        echo ""
+        echo "服务状态: systemctl status sslvpn"
+        echo "查看日志: journalctl -u sslvpn -f"
+        echo "停止服务: systemctl stop sslvpn"
+        echo "启动服务: systemctl start sslvpn"
+        echo "重启服务: systemctl restart sslvpn"
+        echo ""
+        echo "配置文件: /opt/sslvpn/conf/server.toml"
+        echo "管理后台: http://YOUR_IP:8800"
+        echo "默认账户: admin / admin (首次登录请修改密码)"
+        echo ""
+        EOF
+        
+        chmod +x sslvpn-deploy/install.sh
+        
+        # 创建卸载脚本
+        cat > sslvpn-deploy/uninstall.sh << 'EOF'
+        #!/bin/bash
+        
+        set -e
+        
+        echo "========================================="
+        echo "  SSLVPN 卸载脚本"
+        echo "========================================="
+        echo ""
+        
+        # 检查是否为root用户
+        if [ "$EUID" -ne 0 ]; then 
+          echo "错误: 请使用 root 用户运行此脚本"
+          exit 1
+        fi
+        
+        # 停止并禁用服务
+        if systemctl is-active --quiet sslvpn; then
+          echo "停止 SSLVPN 服务..."
+          systemctl stop sslvpn
+        fi
+        
+        if systemctl is-enabled --quiet sslvpn; then
+          echo "禁用 SSLVPN 服务..."
+          systemctl disable sslvpn
+        fi
+        
+        # 删除服务文件
+        if [ -f /etc/systemd/system/sslvpn.service ]; then
+          echo "删除 systemd 服务文件..."
+          rm -f /etc/systemd/system/sslvpn.service
+          systemctl daemon-reload
+        fi
+        
+        # 询问是否删除程序文件
+        echo ""
+        read -p "是否删除 /opt/sslvpn 目录？(包括配置和数据) [y/N]: " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+          echo "删除 /opt/sslvpn 目录..."
+          rm -rf /opt/sslvpn
+        else
+          echo "保留 /opt/sslvpn 目录"
+        fi
+        
+        echo ""
+        echo "卸载完成！"
+        echo ""
+        EOF
+        
+        chmod +x sslvpn-deploy/uninstall.sh
+        
+        # 创建 README
+        cat > sslvpn-deploy/README.md << 'EOF'
+        # SSLVPN 部署包
+
+        ## 系统要求
+
+        - Linux x86_64 (amd64)
+        - systemd
+        - root 权限
+
+        ## 快速部署
+
+        ```bash
+        # 1. 解压部署包
+        tar -xzf sslvpn-deploy.tar.gz
+        cd sslvpn-deploy
+
+        # 2. 运行安装脚本
+        sudo ./install.sh
+        ```
+
+        ## 目录结构
+
+        ```
+        /opt/sslvpn/
+        ├── sslvpn              # 主程序
+        ├── conf/
+        │   ├── server.toml     # 配置文件
+        │   ├── profile.xml     # 客户端配置
+        │   ├── sslvpn.db       # 数据库文件
+        │   ├── vpn_cert.pem    # SSL证书
+        │   └── vpn_cert.key    # SSL密钥
+        ├── files/              # 文件存储目录
+        └── log/                # 日志目录
+        ```
+
+        ## 服务管理
+
+        ```bash
+        # 查看状态
+        systemctl status sslvpn
+
+        # 启动服务
+        systemctl start sslvpn
+
+        # 停止服务
+        systemctl stop sslvpn
+
+        # 重启服务
+        systemctl restart sslvpn
+
+        # 查看日志
+        journalctl -u sslvpn -f
+        ```
+
+        ## 访问管理后台
+
+        默认管理后台地址: `http://YOUR_SERVER_IP:8800`
+
+        默认账户:
+        - 用户名: admin
+        - 密码: admin
+
+        **⚠️ 首次登录后请立即修改默认密码！**
+
+        ## 配置修改
+
+        编辑配置文件: `/opt/sslvpn/conf/server.toml`
+
+        修改后重启服务: `systemctl restart sslvpn`
+
+        ## 卸载
+
+        ```bash
+        cd sslvpn-deploy
+        sudo ./uninstall.sh
+        ```
+
+        ## 技术支持
+
+        如有问题，请查看日志: `journalctl -u sslvpn -f`
+        EOF
+
+    - name: Create tarball
+      run: |
+        tar -czf sslvpn-deploy.tar.gz sslvpn-deploy/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: sslvpn-deploy
+        path: sslvpn-deploy.tar.gz
+        retention-days: 30

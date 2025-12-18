@@ -1,7 +1,9 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	"github.com/spf13/viper"
 )
 
 func SetHome(w http.ResponseWriter, r *http.Request) {
@@ -85,8 +88,68 @@ func SetSystem(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetSoft(w http.ResponseWriter, r *http.Request) {
-	data := base.ServerCfg2Slice()
+	data := base.ServerCfg2Map()
 	RespSucess(w, data)
+}
+
+func SetSoftSave(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		RespError(w, RespInternalErr, err)
+		return
+	}
+	defer r.Body.Close()
+
+	var configs map[string]interface{}
+	err = json.Unmarshal(body, &configs)
+	if err != nil {
+		RespError(w, RespInternalErr, err)
+		return
+	}
+
+	// 先验证所有配置项
+	for key, value := range configs {
+		if err := base.ValidateConfigUpdate(key, value); err != nil {
+			RespError(w, RespInternalErr, fmt.Errorf("配置项 %s 验证失败: %v", key, err))
+			return
+		}
+	}
+
+	// 读取当前配置文件
+	configPath := base.Cfg.Conf
+	if configPath == "" {
+		configPath = "./conf/server.toml"
+	}
+
+	// 使用 viper 读取配置文件
+	v := viper.New()
+	v.SetConfigFile(configPath)
+	err = v.ReadInConfig()
+	if err != nil {
+		RespError(w, RespInternalErr, fmt.Errorf("读取配置文件失败: %v", err))
+		return
+	}
+
+	// 更新配置项
+	for key, value := range configs {
+		v.Set(key, value)
+	}
+
+	// 写入配置文件
+	err = v.WriteConfig()
+	if err != nil {
+		RespError(w, RespInternalErr, fmt.Errorf("保存配置文件失败: %v", err))
+		return
+	}
+
+	// 热加载配置到内存
+	err = base.LoadConfigFromViper(v)
+	if err != nil {
+		RespError(w, RespInternalErr, fmt.Errorf("热加载配置失败: %v", err))
+		return
+	}
+
+	RespSucess(w, nil)
 }
 
 func decimal(f float64) float64 {

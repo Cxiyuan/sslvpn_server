@@ -1,11 +1,11 @@
 #示例配置信息
 
 #其他配置文件,可以使用绝对路径
-#或者相对于 anylink 二进制文件的路径
+#或者相对于 sslvpn 二进制文件的路径
 
 #数据文件
 db_type = "sqlite3"
-db_source = "./conf/anylink.db"
+db_source = "./conf/sslvpn.db"
 #证书文件 使用跟nginx一样的证书即可
 cert_file = "./conf/vpn_cert.pem"
 cert_key = "./conf/vpn_cert.key"
@@ -19,7 +19,7 @@ profile = "./conf/profile.xml"
 #/opt/cisco/anyconnect/profile
 #Linux
 #/opt/cisco/anyconnect/profile
-profile_name = "anylink"
+profile_name = "sslvpn"
 #日志目录,默认为空写入标准输出
 #log_path = "./log"
 log_path = ""
