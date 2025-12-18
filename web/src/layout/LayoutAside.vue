@@ -127,7 +127,7 @@ export default {
 }
 
 .logo-text {
-  font-size: 18px;
+  font-size: 10px;
   font-weight: bold;
   color: #fff;
   font-family: "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
