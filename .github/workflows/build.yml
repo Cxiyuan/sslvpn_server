@@ -313,7 +313,7 @@ jobs:
         tar -czf sslvpn-deploy.tar.gz sslvpn-deploy/
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sslvpn-deploy
         path: sslvpn-deploy.tar.gz
