@@ -125,7 +125,7 @@ func addInitData() error {
 		LinkAddr:    "vpn.xx.com",
 		Banner:      "您已接入公司网络，请按照公司规定使用。\n请勿进行非工作下载及视频行为！",
 		Homecode:    http.StatusOK,
-		Homeindex:   "AnyLink 是一个企业级远程办公 sslvpn 的软件，可以支持多人同时在线使用。",
+		Homeindex:   "not found",
 		AccountMail: accountMail,
 	}
 	err = SettingSessAdd(sess, other)
