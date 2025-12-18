@@ -8,21 +8,33 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    container:
+      image: debian:10
     
     steps:
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y wget curl git build-essential
+
     - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.22'
+      run: |
+        wget https://go.dev/dl/go1.22.0.linux-amd64.tar.gz
+        tar -C /usr/local -xzf go1.22.0.linux-amd64.tar.gz
+        echo "/usr/local/go/bin" >> $GITHUB_PATH
+        export PATH=$PATH:/usr/local/go/bin
+        go version
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
+      run: |
+        curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+        apt-get install -y nodejs
+        node --version
+        npm --version
 
     - name: Build frontend
       run: |
@@ -41,9 +53,10 @@ jobs:
         GOOS: linux
         GOARCH: amd64
         CGO_ENABLED: 1
+        PATH: /usr/local/go/bin:$PATH
       run: |
         cd server
-        go build -ldflags "-X main.appVer=v1.5.3 -X main.commitId=正式版 -X main.buildDate=$(date -u +%Y%m%d-%H%M%S)" -o sslvpn
+        /usr/local/go/bin/go build -ldflags "-X main.appVer=v1.5.3 -X main.commitId=正式版 -X main.buildDate=$(date -u +%Y%m%d-%H%M%S)" -o sslvpn
         cd ..
 
     - name: Prepare deployment package

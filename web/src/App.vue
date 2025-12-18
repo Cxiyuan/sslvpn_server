@@ -86,6 +86,16 @@ html, body {
   border-color: #0d1ab3 !important;
 }
 
+.el-button--primary.is-disabled,
+.el-button--primary.is-disabled:hover,
+.el-button--primary.is-disabled:focus {
+  background-color: #a0cfff !important;
+  border-color: #a0cfff !important;
+  color: #ffffff !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
 .el-button--danger {
   background-color: #E00B0F !important;
   border-color: #E00B0F !important;
