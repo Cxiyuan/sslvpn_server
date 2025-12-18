@@ -29,18 +29,100 @@
         </el-dropdown-menu>
       </el-dropdown>
     </div>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog
+      title="修改密码"
+      :visible.sync="passwordDialogVisible"
+      width="450px"
+      :close-on-click-modal="false">
+      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordForm" label-width="100px">
+        <el-form-item label="原密码" prop="old_pass">
+          <el-input
+            type="password"
+            v-model="passwordForm.old_pass"
+            placeholder="请输入原密码"
+            autocomplete="off"
+            show-password>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="新密码" prop="new_pass">
+          <el-input
+            type="password"
+            v-model="passwordForm.new_pass"
+            placeholder="请输入新密码（至少6位）"
+            autocomplete="off"
+            show-password>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirm_pass">
+          <el-input
+            type="password"
+            v-model="passwordForm.confirm_pass"
+            placeholder="请再次输入新密码"
+            autocomplete="off"
+            show-password>
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="passwordDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="passwordLoading" @click="submitPasswordChange">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import {getUser, removeToken} from "@/plugins/token";
+import axios from "axios";
 
 export default {
   name: "Layoutheader",
   props: ['route_name'],
   data() {
+    const validatePass = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入新密码'));
+      } else if (value.length < 6) {
+        callback(new Error('密码长度不能少于6位'));
+      } else {
+        if (this.passwordForm.confirm_pass !== '') {
+          this.$refs.passwordForm.validateField('confirm_pass');
+        }
+        callback();
+      }
+    };
+    const validateConfirmPass = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请再次输入新密码'));
+      } else if (value !== this.passwordForm.new_pass) {
+        callback(new Error('两次输入密码不一致'));
+      } else {
+        callback();
+      }
+    };
+    
     return {
-      is_active: true
+      is_active: true,
+      passwordDialogVisible: false,
+      passwordLoading: false,
+      passwordForm: {
+        old_pass: '',
+        new_pass: '',
+        confirm_pass: ''
+      },
+      passwordRules: {
+        old_pass: [
+          { required: true, message: '请输入原密码', trigger: 'blur' }
+        ],
+        new_pass: [
+          { required: true, validator: validatePass, trigger: 'blur' }
+        ],
+        confirm_pass: [
+          { required: true, validator: validateConfirmPass, trigger: 'blur' }
+        ]
+      }
     }
   },
   computed: {
@@ -58,9 +140,46 @@ export default {
         removeToken()
         this.$router.push("/login");
       } else if (command === 'changePassword') {
-        this.$router.push("/admin/set/other");
+        this.passwordDialogVisible = true;
+        this.$nextTick(() => {
+          this.$refs.passwordForm.resetFields();
+        });
       }
     },
+    submitPasswordChange() {
+      this.$refs.passwordForm.validate((valid) => {
+        if (!valid) {
+          return false;
+        }
+        
+        this.passwordLoading = true;
+        axios.post('/base/set_pwd', {
+          old_pass: this.passwordForm.old_pass,
+          new_pass: this.passwordForm.new_pass
+        }).then(resp => {
+          const rdata = resp.data;
+          if (rdata.code === 0) {
+            this.$message.success('密码修改成功，请重新登录');
+            this.passwordDialogVisible = false;
+            setTimeout(() => {
+              removeToken();
+              this.$router.push("/login");
+            }, 1500);
+          } else {
+            this.$message.error(rdata.msg || '密码修改失败');
+          }
+        }).catch(error => {
+          if (error.response && error.response.status === 401) {
+            this.$message.error('原密码错误');
+          } else {
+            this.$message.error('密码修改失败');
+          }
+          console.log(error);
+        }).finally(() => {
+          this.passwordLoading = false;
+        });
+      });
+    }
   }
 }
 </script>
