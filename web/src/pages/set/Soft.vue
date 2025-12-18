@@ -79,11 +79,11 @@
                 style="width: 100%;">
               </el-input-number>
               
-              <!-- 字符串值 -->
+              <!-- 字符串值 - 端口号特殊处理 -->
               <el-input
                 v-else
-                v-model="scope.row.editValue"
-                @input="handleValueChange(scope.row)"
+                v-model="scope.row.displayValue"
+                @input="handleInputChange(scope.row, $event)"
                 :disabled="isReadOnly(scope.row.name)"
                 size="small"
                 placeholder="请输入配置值">
@@ -134,14 +134,19 @@ export default {
   computed: {
     displayData() {
       return this.soft_data.map(item => {
-        // 检查是否有修改
         const originalValue = this.originalData[item.name];
         const changed = originalValue !== undefined && originalValue !== item.editValue;
+        
+        let displayValue = item.editValue !== undefined ? item.editValue : item.val;
+        if (item.type === 'string' && displayValue && displayValue.startsWith(':')) {
+          displayValue = displayValue.substring(1);
+        }
         
         return {
           ...item,
           changed,
-          editValue: item.editValue !== undefined ? item.editValue : item.val
+          editValue: item.editValue !== undefined ? item.editValue : item.val,
+          displayValue
         }
       });
     },
@@ -191,6 +196,15 @@ export default {
     },
     
     handleValueChange() {
+      this.$forceUpdate();
+    },
+    
+    handleInputChange(row, value) {
+      if (value && !value.startsWith(':') && /^\d+$/.test(value)) {
+        row.editValue = ':' + value;
+      } else {
+        row.editValue = value;
+      }
       this.$forceUpdate();
     },
     
