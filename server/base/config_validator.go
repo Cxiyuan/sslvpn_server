@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 )
 
 // ValidateConfig 验证配置的合法性
