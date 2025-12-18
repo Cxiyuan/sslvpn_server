@@ -110,6 +110,15 @@ func SetPwd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 保存到配置文件
+	err = base.SaveAdminPass(newPassHash)
+	if err != nil {
+		RespError(w, RespInternalErr, "保存配置失败: "+err.Error())
+		base.Error("保存配置失败:", err)
+		return
+	}
+
+	// 更新内存中的配置
 	base.Cfg.AdminPass = newPassHash
 
 	base.Info("管理员密码已修改")
