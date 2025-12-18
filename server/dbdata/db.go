@@ -145,30 +145,6 @@ func addInitData() error {
 		return err
 	}
 
-	g1 := Group{
-		Name:         "all",
-		AllowLan:     true,
-		ClientDns:    []ValData{{Val: "114.114.114.114"}},
-		RouteInclude: []ValData{{Val: ALL}},
-		Status:       1,
-	}
-	err = SetGroup(&g1)
-	if err != nil {
-		return err
-	}
-
-	g2 := Group{
-		Name:         "ops",
-		AllowLan:     true,
-		ClientDns:    []ValData{{Val: "114.114.114.114"}},
-		RouteInclude: []ValData{{Val: "10.0.0.0/8"}},
-		Status:       1,
-	}
-	err = SetGroup(&g2)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
