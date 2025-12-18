@@ -11,11 +11,105 @@ import (
 	"github.com/songgao/water"
 )
 
+const (
+	iptablesComment = "SSLVPN"
+)
+
+func cleanupIptablesRules() error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return err
+	}
+
+	base.Info("清理旧的iptables规则...")
+
+	natRules, err := ipt.List("nat", "POSTROUTING")
+	if err != nil {
+		base.Warn("获取NAT规则失败:", err)
+	} else {
+		for _, rule := range natRules {
+			if len(rule) > 0 && !isChainRule(rule) && containsComment(rule, iptablesComment) {
+				ruleSpec := parseRuleSpec(rule)
+				if len(ruleSpec) > 0 {
+					err = ipt.Delete("nat", "POSTROUTING", ruleSpec...)
+					if err != nil {
+						base.Warn("删除NAT规则失败:", err)
+					} else {
+						base.Info("已删除NAT规则:", rule)
+					}
+				}
+			}
+		}
+	}
+
+	forwardRules, err := ipt.List("filter", "FORWARD")
+	if err != nil {
+		base.Warn("获取FORWARD规则失败:", err)
+	} else {
+		for _, rule := range forwardRules {
+			if len(rule) > 0 && !isChainRule(rule) && containsComment(rule, iptablesComment) {
+				ruleSpec := parseRuleSpec(rule)
+				if len(ruleSpec) > 0 {
+					err = ipt.Delete("filter", "FORWARD", ruleSpec...)
+					if err != nil {
+						base.Warn("删除FORWARD规则失败:", err)
+					} else {
+						base.Info("已删除FORWARD规则:", rule)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func isChainRule(rule string) bool {
+	return len(rule) > 0 && (rule[0] == '-' && rule[1] == 'P' || rule[0] == '-' && rule[1] == 'N')
+}
+
+func containsComment(rule, comment string) bool {
+	commentFlag := "/* " + comment + " */"
+	for i := 0; i < len(rule)-len(commentFlag)+1; i++ {
+		if rule[i:i+len(commentFlag)] == commentFlag {
+			return true
+		}
+	}
+	return false
+}
+
+func parseRuleSpec(rule string) []string {
+	if len(rule) == 0 || rule[0] != '-' {
+		return nil
+	}
+	
+	var specs []string
+	var current string
+	inQuote := false
+	
+	for i := 0; i < len(rule); i++ {
+		c := rule[i]
+		if c == '"' {
+			inQuote = !inQuote
+		} else if c == ' ' && !inQuote {
+			if len(current) > 0 {
+				specs = append(specs, current)
+				current = ""
+			}
+		} else {
+			current += string(c)
+		}
+	}
+	if len(current) > 0 {
+		specs = append(specs, current)
+	}
+	
+	return specs
+}
+
 func checkTun() {
-	// 测试ip命令
 	base.CheckModOrLoad("tun")
 
-	// 测试tun
 	cfg := water.Config{
 		DeviceType: water.TUN,
 	}
@@ -31,41 +125,37 @@ func checkTun() {
 	if err != nil {
 		base.Fatal("testTun err: ", err)
 	}
-	// 开启服务器转发
-	// err = execCmd([]string{"sysctl -w net.ipv4.ip_forward=1"})
-	// if err != nil {
-	// 	base.Fatal(err)
-	// }
+
 	if base.Cfg.IptablesNat {
-		// 添加NAT转发规则
+		err = cleanupIptablesRules()
+		if err != nil {
+			base.Error("清理iptables规则失败:", err)
+		}
+
 		ipt, err := iptables.New()
 		if err != nil {
 			base.Fatal(err)
 			return
 		}
 
-		// 修复 rockyos nat 不生效
 		base.CheckModOrLoad("iptable_filter")
 		base.CheckModOrLoad("iptable_nat")
-		// base.CheckModOrLoad("xt_comment")
 
-		// 添加注释
 		natRule := []string{"-s", base.Cfg.Ipv4CIDR, "-o", base.Cfg.Ipv4Master, "-m", "comment",
-			"--comment", "AnyLink", "-j", "MASQUERADE"}
+			"--comment", iptablesComment, "-j", "MASQUERADE"}
 		if base.InContainer {
 			natRule = []string{"-s", base.Cfg.Ipv4CIDR, "-o", base.Cfg.Ipv4Master, "-j", "MASQUERADE"}
 		}
-		err = ipt.InsertUnique("nat", "POSTROUTING", 1, natRule...)
+		err = ipt.AppendUnique("nat", "POSTROUTING", natRule...)
 		if err != nil {
 			base.Error(err)
 		}
 
-		// 添加注释
-		forwardRule := []string{"-m", "comment", "--comment", "AnyLink", "-j", "ACCEPT"}
+		forwardRule := []string{"-m", "comment", "--comment", iptablesComment, "-j", "ACCEPT"}
 		if base.InContainer {
 			forwardRule = []string{"-j", "ACCEPT"}
 		}
-		err = ipt.InsertUnique("filter", "FORWARD", 1, forwardRule...)
+		err = ipt.AppendUnique("filter", "FORWARD", forwardRule...)
 		if err != nil {
 			base.Error(err)
 		}
