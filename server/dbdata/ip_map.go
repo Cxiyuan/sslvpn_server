@@ -9,7 +9,7 @@ import (
 type IpMap struct {
 	Id        int       `json:"id" xorm:"pk autoincr not null"`
 	IpAddr    string    `json:"ip_addr" xorm:"varchar(32) not null unique"`
-	MacAddr   string    `json:"mac_addr" xorm:"varchar(32) not null unique"`
+	MacAddr   string    `json:"mac_addr" xorm:"varchar(32) index"`
 	UniqueMac bool      `json:"unique_mac" xorm:"Bool index"`
 	Username  string    `json:"username" xorm:"varchar(60) index"`
 	Keep      bool      `json:"keep" xorm:"Bool"` // 保留 ip-username 绑定
@@ -45,10 +45,6 @@ func SetIpMap(v *IpMap) error {
 		}
 		// 统一macAddr的格式
 		v.MacAddr = macHw.String()
-	} else {
-		// 如果MAC为空，生成一个占位符以满足唯一约束
-		// 使用时间戳生成唯一的占位MAC
-		v.MacAddr = "00:00:00:00:00:00"
 	}
 
 	v.UpdatedAt = time.Now()
