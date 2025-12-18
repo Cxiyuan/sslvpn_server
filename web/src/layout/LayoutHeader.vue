@@ -3,11 +3,6 @@
     <div class="header-left">
       <i @click="toggleClick" :class="is_active ? 'el-icon-s-fold' : 'el-icon-s-unfold'" class="toggle-icon"></i>
 
-      <div class="brand-logo">
-        <i class="el-icon-connection"></i>
-        <span>安全访问管理系统</span>
-      </div>
-
       <el-breadcrumb separator="/" class="app-breadcrumb">
         <el-breadcrumb-item v-for="(item, index) in route_name" :key="index">{{ item }}</el-breadcrumb-item>
       </el-breadcrumb>
@@ -23,6 +18,10 @@
           <i class="el-icon-arrow-down"></i>
         </div>
         <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item command="changePassword">
+            <i class="el-icon-key"></i>
+            修改密码
+          </el-dropdown-item>
           <el-dropdown-item command="logout">
             <i class="el-icon-switch-button"></i>
             退出登录
@@ -50,17 +49,17 @@ export default {
     },
   },
   methods: {
-    // 菜单栏开关按钮
     toggleClick() {
       this.is_active = !this.is_active
-      // 触发事件,抛出到上层
       this.$emit('update:is_active', this.is_active)
     },
-    handleCommand() {
-      console.log("handleCommand")
-      // 退出 删除登录信息
-      removeToken()
-      this.$router.push("/login");
+    handleCommand(command) {
+      if (command === 'logout') {
+        removeToken()
+        this.$router.push("/login");
+      } else if (command === 'changePassword') {
+        this.$router.push("/admin/set/other");
+      }
     },
   }
 }
@@ -112,8 +111,6 @@ export default {
 
 .app-breadcrumb {
   font-size: 14px;
-  padding-left: 20px;
-  border-left: 1px solid #e4e7ed;
 }
 
 .app-breadcrumb >>> .el-breadcrumb__inner {

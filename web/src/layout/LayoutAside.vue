@@ -4,12 +4,12 @@
       <transition name="sidebar-logo-fade">
         <div v-if="is_active" class="sidebar-logo-content">
           <div class="logo-icon">
-            <i class="el-icon-lock"></i>
+            <i class="el-icon-connection"></i>
           </div>
-          <span class="logo-text">SSLVPN</span>
+          <span class="logo-text">安全访问管理系统</span>
         </div>
         <div v-else class="sidebar-logo-mini">
-          <i class="el-icon-lock"></i>
+          <i class="el-icon-connection"></i>
         </div>
       </transition>
     </div>
