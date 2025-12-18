@@ -38,10 +38,10 @@ func StartAdmin() {
 
 	r.Handle("/", http.RedirectHandler("/ui/", http.StatusFound)).Name("index")
 	r.PathPrefix("/ui/").Handler(
-		// http.StripPrefix("/ui/", http.FileServer(http.Dir(base.Cfg.UiPath))),
 		http.FileServer(http.FS(UiData)),
 	).Name("static")
 	r.HandleFunc("/base/login", Login).Name("login")
+	r.HandleFunc("/base/set_pwd", SetPwd).Methods(http.MethodPost)
 
 	r.HandleFunc("/set/home", SetHome)
 	r.HandleFunc("/set/system", SetSystem)

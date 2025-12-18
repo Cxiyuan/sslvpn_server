@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -14,10 +15,6 @@ import (
 
 // Login 登陆接口
 func Login(w http.ResponseWriter, r *http.Request) {
-	// TODO 调试信息输出
-	// hd, _ := httputil.DumpRequest(r, true)
-	// fmt.Println("DumpRequest: ", string(hd))
-
 	_ = r.ParseForm()
 	adminUser := r.PostFormValue("admin_user")
 	adminPass := r.PostFormValue("admin_pass")
@@ -79,28 +76,63 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	RespSucess(w, data)
 }
 
+// SetPwd 修改密码接口
+func SetPwd(w http.ResponseWriter, r *http.Request) {
+	var reqData struct {
+		OldPass string `json:"old_pass"`
+		NewPass string `json:"new_pass"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		RespError(w, RespInternalErr, "参数解析失败")
+		return
+	}
+
+	if reqData.OldPass == "" || reqData.NewPass == "" {
+		RespError(w, RespParamErr, "密码不能为空")
+		return
+	}
+
+	if len(reqData.NewPass) < 6 {
+		RespError(w, RespParamErr, "新密码长度不能少于6位")
+		return
+	}
+
+	if !utils.PasswordVerify(reqData.OldPass, base.Cfg.AdminPass) {
+		RespError(w, RespUserOrPassErr, "原密码错误")
+		return
+	}
+
+	newPassHash, err := utils.PasswordHash(reqData.NewPass)
+	if err != nil {
+		RespError(w, RespInternalErr, "密码加密失败")
+		return
+	}
+
+	base.Cfg.AdminPass = newPassHash
+
+	base.Info("管理员密码已修改")
+	RespSucess(w, nil)
+}
+
 func authMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 		if r.Method == http.MethodOptions {
-			// w.WriteHeader(http.StatusOK)
-			// 正式环境不支持 OPTIONS
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
 		route := mux.CurrentRoute(r)
 		name := route.GetName()
-		// fmt.Println("bb", r.URL.Path, name)
 		if utils.InArrStr([]string{"login", "index", "static"}, name) {
-			// 不进行鉴权
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 进行登陆鉴权
 		jwtToken := r.Header.Get("Jwt")
 		if jwtToken == "" {
 			jwtToken = r.FormValue("jwt")
@@ -128,7 +160,6 @@ func recoverHttp(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				stack := debug.Stack()
 				base.Error(err, string(stack))
-				// http.Error(w, "Internal Server Error", 500)
 				RespError(w, 500, "Internal Server Error")
 			}
 		}()
