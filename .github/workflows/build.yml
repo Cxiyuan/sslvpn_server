@@ -31,6 +31,11 @@ jobs:
         npm run build
         cd ..
 
+    - name: Copy frontend to server
+      run: |
+        rm -rf server/ui
+        cp -r web/ui server/ui
+
     - name: Build backend
       env:
         GOOS: linux
