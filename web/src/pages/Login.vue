@@ -10,7 +10,6 @@
           <i class="el-icon-lock"></i>
         </div>
         <h1 class="login-title">安全访问管理系统</h1>
-        <p class="login-subtitle">SSLVPN Management Platform</p>
       </div>
 
       <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="login-form">
@@ -42,10 +41,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-
-      <div class="login-footer">
-        <p>© 2020-present SSLVPN. All rights reserved.</p>
-      </div>
     </div>
   </div>
 </template>
@@ -268,18 +263,5 @@ export default {
 
 .login-button:active {
   transform: translateY(0);
-}
-
-.login-footer {
-  text-align: center;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.login-footer p {
-  font-size: 12px;
-  color: #999;
-  margin: 0;
 }
 </style>
