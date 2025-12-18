@@ -43,7 +43,7 @@ jobs:
         CGO_ENABLED: 1
       run: |
         cd server
-        go build -ldflags "-X main.CommitId=$(git rev-parse --short HEAD) -X main.BuildDate=$(date -u +%Y%m%d-%H%M%S)" -o sslvpn
+        go build -ldflags "-X main.appVer=v1.5.3 -X main.commitId=正式版 -X main.buildDate=$(date -u +%Y%m%d-%H%M%S)" -o sslvpn
         cd ..
 
     - name: Prepare deployment package
