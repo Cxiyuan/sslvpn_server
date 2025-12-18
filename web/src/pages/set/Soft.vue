@@ -190,8 +190,7 @@ export default {
       return item && item.sensitive === true;
     },
     
-    handleValueChange(row) {
-      // 触发计算属性更新
+    handleValueChange() {
       this.$forceUpdate();
     },
     
